@@ -1,5 +1,6 @@
 import pandas
 from sklearn.cluster import OPTICS
+from sklearn.decomposition import PCA
 import statsmodels.tsa.stattools as stats
 from hurst import compute_Hc
 
@@ -12,6 +13,7 @@ import SimpleLSTM
 
 def main():
 	np.set_printoptions(threshold=sys.maxsize)
+	'''
 	coins = pd.DataFrame()
 	minDates = []
 	for filename in os.scandir('./data/Historical/Binance'):
@@ -20,7 +22,7 @@ def main():
 			if str(filename).split('_')[2][0] == 'd':
 				frame = pd.read_csv(filename,header=1)
 				#print(frame.columns)
-				frame = frame[['symbol','date','open']]
+				frame = frame[['Name','date','open']]
 				frame['date'] = pd.to_datetime(frame['date'])
 				#print(frame)
 				if coins.empty:
@@ -37,17 +39,24 @@ def main():
 	coins['date_delta'] = (coins['date'] - coins['date'].min())  / np.timedelta64(1,'D')
 	maxD = max(coins['date_delta'])
 	#print(maxD)
-	for coin in pd.unique(coins['symbol']):
+	for coin in pd.unique(coins['Name']):
 		#print(coin)
-		#print(coins[coins['symbol'] == coin]['date_delta'])
-		if max(coins[coins['symbol'] == coin]['date_delta']) < maxD:
-			coins.drop(coins[coins.symbol == coin].index, inplace = True)
+		#print(coins[coins['Name'] == coin]['date_delta'])
+		if max(coins[coins['Name'] == coin]['date_delta']) < maxD:
+			coins.drop(coins[coins.Name == coin].index, inplace = True)
+	'''
 
-		#print(coin)
+
+	coins = pd.read_csv('./data/Historical/Kaggle/all_stocks5yr.csv')
+	coins['date'] = pd.to_datetime(coins['date'])
+	for name in coins['Name'].unique():
+		if len(coins[coins['Name']==name]) < 1259:
+			coins.drop(coins[coins.Name==name].index,inplace=True)
+	coins['date_delta'] = (coins['date'] - coins['date'].min()) / np.timedelta64(1, 'D')
 	pairs = findPairs(coins)
 	print(pairs)
 
-	predictions = SimpleLSTM.run(coins[['open','symbol']],pairs,0.001,1000)
+	predictions = SimpleLSTM.run(coins[['open','Name']],pairs,0.001,1000)
 
 	thresholds = calc_thresholds(predictions)
 	print(thresholds)
@@ -108,32 +117,72 @@ def calc_thresholds(predictions):
 	return thresholds
 
 def findPairs(coins):
-	X = coins[['date_delta','open']]
+	'''
 
-	clusters = OPTICS().fit_predict(X)
+	:param coins:
+	:return:
+	'''
 
-	coins['clusterLabel'] = clusters
+	X = pd.DataFrame(0,index=np.arange(coins.shape[0]),columns=coins['Name'].unique())
 
-	coins_noOutliers = coins.copy()
-	coins_noOutliers.drop(coins[coins.clusterLabel == -1].index, inplace = True)
+	for name in X.columns:
+		X[name] = coins[coins['Name'] == name]['open']
+
+
+	X.insert(0, 'date_delta', np.tile(np.arange(1259),len(X.columns)))
+	X = X.fillna(0).copy()
+
+
+	'''
+	pca = PCA(n_components=5)
+	X_pca = pca.fit_transform(X)
+	print(X_pca)
+	print(pca)
+	clusters = OPTICS(xi=.2).fit_predict(X_pca)
+	with open('clusters','w') as f:
+		f.write(np.array2string(clusters))
+	'''
+	clusters = []
+	with open('clusters', 'r') as f:
+		clusters = f.read()
+
+	#print(clusters)
+  
+	X['clusterLabel'] = clusters
+
+	names = list(X.columns)
+	print(names)
+	for name in names:
+		if name == 'clusterLabel' or name == 'date_delta':
+			continue
+		ind = X[name].to_numpy().nonzero()
+		Y = X[[name,'clusterLabel']].iloc[ind]
+
+		with open('arbitrageData'+name+'.csv', 'w') as f:
+			f.write(Y.to_csv())
+
+
+	coins_noOutliers = X.copy()
+	coins_noOutliers.drop(X[X.clusterLabel == -1].index, inplace = True)
+	coins_noOutliers.drop('date_delta',axis=1,inplace=True)
 	cointegrated = []
 	clusteredCoins = set()
 	for i in range(coins_noOutliers['clusterLabel'].max()+1):
-		names = coins_noOutliers[coins_noOutliers['clusterLabel'] == i]
-		names = names['symbol'].unique()
+		cluster = coins_noOutliers[coins_noOutliers['clusterLabel'] == i]
+		names = cluster.columns[cluster.nonzero()]
 		if len(names) > 1:
 			clusteredCoins.add(tuple(names))
 		#print(names)
+	print('Finished Clustering with',len(clusteredCoins),'clusters found')
 
-	with open('arbitrageData.csv','w') as f:
-		f.write(coins.to_csv())
+	print(clusteredCoins)
 
 	for ele in clusteredCoins:
 		#print(ele)
 		for i in range(len(ele)-1):
 			for coin2 in ele[i+1:]:
-				co1 = coins[coins['symbol'] == ele[i]]
-				co2 = coins[coins['symbol'] == coin2]
+				co1 = coins[coins['Name'] == ele[i]]
+				co2 = coins[coins['Name'] == coin2]
 				#print(co1)
 				#print(co2)
 				#print()
@@ -147,9 +196,9 @@ def findPairs(coins):
 	coH_pairs = []
 	print(co_pairs)
 	for pair in co_pairs:
-		#print(coins[coins['symbol'] == pair[0]]['open'].to_numpy())
-		#print(coins[coins['symbol'] == pair[1]]['open'].to_numpy())
-		spread = np.subtract(coins[coins['symbol'] == pair[0]]['open'].to_numpy(), coins[coins['symbol'] == pair[1]]['open'].to_numpy())
+		#print(coins[coins['Name'] == pair[0]]['open'].to_numpy())
+		#print(coins[coins['Name'] == pair[1]]['open'].to_numpy())
+		spread = np.subtract(coins[coins['Name'] == pair[0]]['open'].to_numpy(), coins[coins['Name'] == pair[1]]['open'].to_numpy())
 		spread = np.absolute(spread)
 		spread[spread==0] = np.finfo(np.float64).eps
 		#print(spread)
