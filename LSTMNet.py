@@ -14,111 +14,139 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.preprocessing import OneHotEncoder
 
 
-def run(dataset_train, dataset_test):
-    # Batch size is the number of training examples used to calculate each iteration's gradient
+class PairLSTM(df,labels):
 
-    data_loader_train = DataLoader(dataset=dataset_train, batch_size=batch_size_train, shuffle=False)
-    data_loader_test = DataLoader(dataset=dataset_test, batch_size=len(dataset_test), shuffle=False)
+    def __init__(self,df,labels):
+        
+        df['date_delta'] = (df[labels[1]]] - df[labels[1]].min())  / np.timedelta64(1,'D')
+    
+        train = df[df['date_delta'] <= 0.8 * max(df['date_delta'])]
+        test = df[df['date_delta'] > 0.8 * max(df['date_delta'])]
 
-    # Define the hyperparameters
-    learning_rate = 1e-2
-    encoder = LSTMEncoder()
-    decoder = LSTMDecoder()
-    # Initialize the optimizer with above parameters
-    optimizer = optim.SGD(encoder.parameters(), lr=learning_rate)
+        dataset_train = CoinsDataset(train)
+        dataset_test = CoinsDataset(test)
 
-    # Define the loss function
-    loss_fn = nn.MSELoss()  # mean squared error
+        print("Train set size: ", dataset_train.length)
+        print("Test set size: ", dataset_test.length)
 
-    # Train and get the resulting loss per iteration
-    loss = train(model=shallow_model, loader=data_loader_train, optimizer=optimizer, loss_fn=loss_fn, indecies=tscv)
+        losses, y_predict = run(dataset_train=dataset_train, dataset_test=dataset_test)
 
-    # Test and get the resulting predicted y values
-    y_predict = test(model=shallow_model, loader=data_loader_test)
+        print("Final loss:", sum(losses[-100:]) / 100)
+        plot_loss(losses)
 
-    return loss, y_predict
+        fig2 = pyplot.figure()
+        fig2.set_size_inches(8, 6)
+        pyplot.scatter(x_test, y_test, marker='o', s=0.2)
+        pyplot.scatter(x_test, y_predict, marker='o', s=0.3)
+        pyplot.text(-9, 0.44, "- Prediction", color="orange", fontsize=8)
+        pyplot.text(-9, 0.48, "- Sine (with noise)", color="blue", fontsize=8)
+        pyplot.show()
+    
+    def run(dataset_train, dataset_test):
+        # Batch size is the number of training examples used to calculate each iteration's gradient
+
+        data_loader_train = DataLoader(dataset=dataset_train, batch_size=batch_size_train, shuffle=False)
+        data_loader_test = DataLoader(dataset=dataset_test, batch_size=len(dataset_test), shuffle=False)
+
+        # Define the hyperparameters
+        learning_rate = 1e-2
+        encoder = LSTMEncoder()
+        decoder = LSTMDecoder()
+        # Initialize the optimizer with above parameters
+        optimizer = optim.SGD(encoder.parameters(), lr=learning_rate)
+
+        # Define the loss function
+        loss_fn = nn.MSELoss()  # mean squared error
+
+        # Train and get the resulting loss per iteration
+        loss = train(model=shallow_model, loader=data_loader_train, optimizer=optimizer, loss_fn=loss_fn, indecies=tscv)
+
+        # Test and get the resulting predicted y values
+        y_predict = test(model=shallow_model, loader=data_loader_test)
+
+        return loss, y_predict
 
 
-def train_batch(model, x, y, optimizer, loss_fn):
-    # Run forward calculation
-    y_predict = model.forward(x)
+    def train_batch(model, x, y, optimizer, loss_fn):
+        # Run forward calculation
+        y_predict = model.forward(x)
 
-    # Compute loss.
-    loss = loss_fn(y_predict, y)
+        # Compute loss.
+        loss = loss_fn(y_predict, y)
 
-    # Before the backward pass, use the optimizer object to zero all of the
-    # gradients for the variables it will update (which are the learnable weights
-    # of the model)
-    optimizer.zero_grad()
+        # Before the backward pass, use the optimizer object to zero all of the
+        # gradients for the variables it will update (which are the learnable weights
+        # of the model)
+        optimizer.zero_grad()
 
-    # Backward pass: compute gradient of the loss with respect to model
-    # parameters
-    loss.backward()
+        # Backward pass: compute gradient of the loss with respect to model
+        # parameters
+        loss.backward()
 
-    # Calling the step function on an Optimizer makes an update to its
-    # parameters
-    optimizer.step()
+        # Calling the step function on an Optimizer makes an update to its
+        # parameters
+        optimizer.step()
 
-    return loss.data.item()
+        return loss.data.item()
 
 
-def train(model, loader, optimizer, loss_fn, epochs=5):
-    losses = list()
+    def train(model, loader, optimizer, loss_fn, epochs=5):
+        losses = list()
 
-    batch_index = 0
-    for e in range(epochs):
+        batch_index = 0
+        for e in range(epochs):
+            for x, y in loader:
+                loss = train_batch(model=model, x=x, y=y, optimizer=optimizer, loss_fn=loss_fn)
+                losses.append(loss)
+
+                batch_index += 1
+
+            print("Epoch: ", e + 1)
+            print("Batches: ", batch_index)
+            if epoch % 100 == 0:
+                print("loss: %1.5f" % (losses[-1].item()))
+
+        return losses
+
+
+    def test_batch(model, x, y):
+        # run forward calculation
+        y_predict = model.forward(x)
+
+        return y, y_predict
+
+
+    def test(model, loader):
+        y_vectors = list()
+        y_predict_vectors = list()
+
+        batch_index = 0
         for x, y in loader:
-            loss = train_batch(model=model, x=x, y=y, optimizer=optimizer, loss_fn=loss_fn)
-            losses.append(loss)
+            y, y_predict = test_batch(model=model, x=x, y=y)
+
+            y_vectors.append(y.data.numpy())
+            y_predict_vectors.append(y_predict.data.numpy())
 
             batch_index += 1
 
-        print("Epoch: ", e + 1)
-        print("Batches: ", batch_index)
-        if epoch % 100 == 0:
-            print("loss: %1.5f" % (losses[-1].item()))
+        y_predict_vector = np.concatenate(y_predict_vectors)
 
-    return losses
+        return y_predict_vector
 
 
-def test_batch(model, x, y):
-    # run forward calculation
-    y_predict = model.forward(x)
+    def plot_loss(losses, show=True):
+        fig = pyplot.gcf()
+        fig.set_size_inches(8, 6)
+        ax = pyplot.axes()
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Loss")
+        x_loss = list(range(len(losses)))
+        pyplot.plot(x_loss, losses)
 
-    return y, y_predict
+        if show:
+            pyplot.show()
 
-
-def test(model, loader):
-    y_vectors = list()
-    y_predict_vectors = list()
-
-    batch_index = 0
-    for x, y in loader:
-        y, y_predict = test_batch(model=model, x=x, y=y)
-
-        y_vectors.append(y.data.numpy())
-        y_predict_vectors.append(y_predict.data.numpy())
-
-        batch_index += 1
-
-    y_predict_vector = np.concatenate(y_predict_vectors)
-
-    return y_predict_vector
-
-
-def plot_loss(losses, show=True):
-    fig = pyplot.gcf()
-    fig.set_size_inches(8, 6)
-    ax = pyplot.axes()
-    ax.set_xlabel("Iteration")
-    ax.set_ylabel("Loss")
-    x_loss = list(range(len(losses)))
-    pyplot.plot(x_loss, losses)
-
-    if show:
-        pyplot.show()
-
-    pyplot.close()
+        pyplot.close()
 
 
 class SecuritiesDataset(Dataset):
@@ -127,7 +155,7 @@ class SecuritiesDataset(Dataset):
         #dataset = pd.get_dummies(dataset, columns=["symbol"], prefix="coin")
 
         # Normalize dataset
-        data_high = np.asarray(dataset['Open']).reshape(-1, 1)
+        data_high = np.asarray(dataset[labels[1]]).reshape(-1, 1)
         scaler = MinMaxScaler()
         scaler.fit(data_high)
 
@@ -189,9 +217,11 @@ class LSTM(nn.Module):
                 torch.zeros(self.num_layers, batch_size, self.hidden_size))
 
 
-def main():
-    df = pd.read_csv('arbitrageData.csv')
-
+def main(df,labels):
+    
+    np.set_printoptions(threshold=sys.maxsize)
+    df['date_delta'] = (df['date'] - df['date'].min())  / np.timedelta64(1,'D')
+    
     train = df[df['date_delta'] <= 0.8 * max(df['date_delta'])]
     test = df[df['date_delta'] > 0.8 * max(df['date_delta'])]
 
@@ -214,9 +244,8 @@ def main():
     pyplot.text(-9, 0.48, "- Sine (with noise)", color="blue", fontsize=8)
     pyplot.show()
 
-
 if __name__ == "__main__":
-    main()
+    main(df,labels)
 
 '''
 class LSTMDecoder(nn.Module):

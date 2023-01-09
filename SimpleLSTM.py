@@ -44,13 +44,13 @@ def trainTest(df,pair,target,split):
     :return: train pd dataframe, test pd dataframe
     """
     coins = {}
-    for symbol in df['symbol'].unique():
-        coins[symbol] = df[df['symbol'] == symbol]
+    for Name in df['name'].unique():
+        coins[Name] = df[df['name'] == Name]
 
     X = pd.DataFrame()
-
-    for symbol in pair:
-        X[symbol] = coins[symbol]['open'].values
+    print(pair)
+    for Name in pair:
+        X[Name] = coins[Name]['open'].values
 
     #print(X.head())
     Y = pd.DataFrame()
@@ -117,22 +117,22 @@ def test(lstm1,x_test,mm):
     train_predict = lstm1(x_test)  # forward pass
     return mm.inverse_transform(train_predict.data.numpy())  # numpy conversion and re-scaled
 
-def plot(data_predict,y_test,mm,symbol):
+def plot(data_predict,y_test,mm,Name):
     """
 
     :param predict:
     :param y_test:
     :return:
     """
-
+    
     dataY_plot = y_test.data.numpy()
     dataY_plot = mm.inverse_transform(dataY_plot)
     plt.figure(figsize=(10, 6))  # plotting
 
     plt.xlabel("Days")
     plt.ylabel("Price USD")
-    plt.plot(dataY_plot, label='True {name} Price'.format(name=symbol))  # actual plot
-    plt.plot(data_predict, label='Predicted {name} Price'.format(name=symbol))  # predicted plot
+    plt.plot(dataY_plot, label='True {name} Price'.format(name=Name))  # actual plot
+    plt.plot(data_predict, label='Predicted {name} Price'.format(name=Name))  # predicted plot
     plt.title('Time-Series Prediction')
     plt.legend()
     plt.show()
@@ -148,13 +148,14 @@ def run(df,pairs,learning_rate=0.001,epochs=1000):
     """
 
     predictions = []
-    for pair in pairs:
-        for sec in pair:
-            x_train, x_test, y_train, y_test, mm = trainTest(df, pair, sec, 0.7)
+    print(pairs)
+    for i in range(pairs.shape[0]):
+        print(pairs.iloc[i])
+        for j in range(2):
+            x_train, x_test, y_train, y_test, mm = trainTest(df, pairs.iloc[i].to_numpy()[1:3], pairs.iloc[i].to_numpy()[j+1], 0.7)
 
             #print("Training Shape", x_train.shape, y_train.shape)
             #print("Testing Shape", x_test.shape, y_test.shape)
-            print(sec)
 
             input_size = 2  # number of features
             hidden_size = 2  # number of features in hidden state
@@ -171,27 +172,7 @@ def run(df,pairs,learning_rate=0.001,epochs=1000):
 
             predict = test(lstm1, x_test,mm)
 
-            predict_unscaled = plot(predict, y_test, mm,sec)
-            predictions.append((sec,predict_unscaled))
+            #predict_unscaled = plot(predict, y_test, mm,pairs.iloc[i].to_numpy()[j+1])
+            predictions.append((pairs.iloc[i].to_numpy()[j+1],predict))
 
     return predictions
-def main():
-    df = pd.read_csv('arbitrageData.csv')
-
-
-    print(run(df,[('COMP/USDT', 'SOL/USDT'), ('SHIB/USDT', 'TRX/USDT'), ('CELR/USDT', 'DOGE/USDT')],0.001,1000))
-    '''
-    
-
-    X_ss = ss.fit_transform(X)
-    y_mm = mm.fit_transform(y)
-
-    X_train = X_ss[:200, :]
-    X_test = X_ss[200:, :]
-
-    y_train = y_mm[:200, :]
-    y_test = y_mm[200:, :]
-    '''
-
-if __name__ == "__main__":
-    main()
