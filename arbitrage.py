@@ -34,30 +34,11 @@ def cmdInterpret(cmdLine):
     else:     
         data = pd.read_csv(filename,sep=delim)
     
-    # Removes securites with fewer elements than security with longest timeframe
+    
     data.rename(columns={labels[2]:'name'},inplace=True)
     labels[2] = 'name'
     data[labels[1]] = pd.to_datetime(data[labels[1]])
-    '''
-    maxRange = 0
-    removed = []
     
-    for sec in data[labels[2]].unique():
-        if data[data[labels[2]] == sec].shape[0] > maxRange:
-            maxRange = data[data[labels[2]] == sec].shape[0]
-            
-    
-    for sec in data[labels[2]].unique():
-        
-        if data[data[labels[2]] == sec].shape[0] < maxRange:
-            removed.append(sec)
-            data = data[data.name != sec]
-            
-        
-    if removed:
-        print('The following securities were removed from the dataset due to having a sample size smaller than the largest in the data set')
-        print(removed)
-    '''    
     if findPairs:
         pairs = pd.DataFrame(find_pairs(data,labels))
         pairs.to_csv(os.getcwd()+'/Pairs_'+filename.split('/')[-1])     
@@ -75,21 +56,12 @@ def cmdInterpret(cmdLine):
     if test:
         pairs = pd.read_csv('Pairs_'+filename.split('/')[-1])
         pairs = [tuple(x[1:]) for x in pairs.to_numpy()]
-        #print('Pairs')
-        #print(pairs)
         thresholds = pd.read_csv('Thresholds_'+filename.split('/')[-1])
         print(thresholds.head())
         for col in thresholds.columns:
-            #print('col')
-            #print(col)
             for i in range(thresholds[col].size):
-                #print(i)
-                #print(thresholds[col])
-                #print(thresholds[col][i])
-                #print()
                 thresholds[col][i] = literal_eval(thresholds[col][i])
-        #print('thresholds.csv')
-        #print(thresholds.head())
+
         
         port = pf.Portfolio(data,pairs,thresholds,initInvest)
         ledger = port.test_thresholds(0.7)
@@ -116,12 +88,10 @@ def calc_thresholds(predictions):
 
     thresholds = {}
     for ts in predictions:
-        #print(ts)
         Dp_t = []
         Dn_t = []
         for i in range(1,len(ts[1])):
             D_i = (ts[1][i]-ts[1][i-1])/ts[1][i-1]
-            #print(D_i)
             if D_i >= 0:
                 Dp_t.append(D_i)
             else:
@@ -130,17 +100,13 @@ def calc_thresholds(predictions):
         Dp_t = pd.DataFrame(Dp_t, columns=['Dp_t'])
         Dn_t = pd.DataFrame(Dn_t, columns=['Dn_t'])
         
-        print('ts[0]')
-        print(ts[0])
-        #print('neg:',Dp_t)
-        #print('pos:',Dn_t)
+
         thresholds_pos = Dp_t.quantile([0.1,0.25,0.75,0.9])
         thresholds_neg = Dn_t.quantile([0.1,0.25,0.75,0.9])
 
         thresholds[ts[0]] = [[x[0] for x in thresholds_pos.to_numpy()], [x[0] for x in thresholds_neg.to_numpy()]]
     
     
-    #print(thresholds.items())
     return thresholds
 
 
@@ -169,12 +135,8 @@ def cluster(coins,labels):
 
 
 
-    #print(clusters_values)
-    #print(np.shape(clusters_values))
     clusters_values = np.reshape(clusters_values,(1,len(clusters_values)))
     clusters = pd.DataFrame(data=clusters_values,columns=['clusterLabel'])
-    #print(clusters.head())
-    #print(clusters)
 
     X['clusterLabel'] = clusters
 
@@ -224,16 +186,11 @@ def find_pairs(coins,labels):
     coH_pairs = []
     print(co_pairs)
     for pair in co_pairs:
-        #print(coins[coins['name'] == pair[0]]['open'].to_numpy())
-        #print(coins[coins['name'] == pair[1]]['open'].to_numpy())
-        #print(pair)
-        #print(coins[coins[labels[2]] == pair[0]][labels[0]].to_numpy())
-        #print(coins[coins[labels[2]] == pair[1]][labels[0]].to_numpy())
         
         spread = np.subtract(coins[coins[labels[2]] == pair[0]][labels[0]].to_numpy(), coins[coins[labels[2]] == pair[1]][labels[0]].to_numpy())
         spread = np.absolute(spread)
         spread[spread==0] = np.finfo(np.float64).eps
-        #print(spread)
+
         H, c, data = compute_Hc(spread, kind='price', simplified=True)
         if H < 0.5:
             coH_pairs.append(pair)
