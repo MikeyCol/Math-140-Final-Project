@@ -4,6 +4,9 @@ import datetime
 
 class Investment():
     '''
+    container for invidiaul investments
+    initIn: float, initial investment amount
+    day: int, records the day the investment was made as number of days passed since the first 
     '''
     def __init__(self,initIn,day):
         self.initIn = initIn
@@ -12,16 +15,19 @@ class Investment():
     
 class Portfolio():
     '''
+    Contains methods for testing the thresholds on the dataset
+    also keeps track of all investments made durring testing
     '''
     
     def __init__(self,data,pairs,thresholds,initIn):
         '''
         '''
-        self.data = data
-        self.pairs = pairs
-        self.thresholds = thresholds
-        self.freeCash = initIn
-        self.ledger = {}
+        self.data = data # dataset
+        self.pairs = pairs # list of pairs produced by arbitrage.find_pairs()
+        self.thresholds = thresholds # dictionary of thresholds for each pair
+        self.freeCash = initIn # cash available for trading
+        self.ledger = {} # dictinoary used to keep track of every resovled position. 
+        #key, value pairs are key = day | value = list of tuples describing each trade in format (name of security, long or short, open price, profit)
         
 
         self.secs = set()
@@ -37,6 +43,12 @@ class Portfolio():
         '''
     def sell(self,sec,open,day,isLong):
         '''
+        sells position and updates freeCash and Ledger
+
+        :param sec: name of the security to sell
+        :param open: current open price
+        :param day: current day
+        :param isLong: boolean determined long or short position
         '''
         if isLong:
             self.freeCash += open
@@ -116,14 +128,14 @@ class Portfolio():
                 print()
                 print('sec 1 short adjusted threshold: ' + str(opensThresholds[1][1]*prevOpen + prevOpen))
                 if sec not in self.investmentsShort.keys() and open < opensThresholds[1][1]*prevOpen + prevOpen: # tests for opening short on sec 1
-                    print('opened short on opens on day ' + str(i))
+                    print('opened short on '+str(open)+' on day ' + str(i))
                     invest = self.freeCash*percentInvest
                     self.freeCash -= invest
                     self.investmentsShort[sec] = Investment(invest,i)
                     
                 print('sec 1 long adjusted threshold: ' + str(opensThresholds[0][2]*prevOpen + prevOpen)) 
                 if sec not in self.investmentsLong.keys() and open > opensThresholds[0][2]*prevOpen + prevOpen: # tests for opening long on sec 1
-                    print('opened long on opens on day ' + str(i))
+                    print('opened long on '+str(open)+' on day ' + str(i))
                     invest = self.freeCash*percentInvest
                     self.freeCash -= invest
                     self.investmentsLong[sec] = Investment(invest,i)

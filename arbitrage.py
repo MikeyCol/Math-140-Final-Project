@@ -16,6 +16,10 @@ import Portfolio as pf
 
 
 def cmdInterpret(cmdLine):
+    '''
+    Command line interpeter
+
+    '''
     findPairs = cmdLine.args.findPairs
     calcThresholds = cmdLine.args.calcThresholds
     labels = cmdLine.args.labels
@@ -81,9 +85,10 @@ def cmdInterpret(cmdLine):
 
 def calc_thresholds(predictions):
     """
+    calculates trading thresholds based on the LSTM model's predcitions 
 
-    :param predictions:
-    :return:
+    :param predictions: list of time series predictions output by SimpleLSTM.run()
+    :return: dictionary of trading thresholds with key value pairs, name of security: list of thresholds
     """
 
     thresholds = {}
@@ -110,20 +115,31 @@ def calc_thresholds(predictions):
     return thresholds
 
 
-def cluster(coins,labels):
+def cluster(secs,labels): # currently has no use other than data visualization 
+    '''
+    runs OPTICS on the dataset and writes output to individual dataset files 
+    naming convention: arbitrageData[name of securty].csv
 
-    X = pd.DataFrame(0,index=np.arange(coins.shape[0]),columns=coins['Name'].unique())
+    :param secs: dataset of securites
+    :param lables: lables of open,date and name columns
+    :return: N/a
+
+    '''
+
+    X = pd.DataFrame(0,index=np.arange(secs.shape[0]),columns=secs['Name'].unique())
 
     for name in X.columns:
-        X[name] = coins[coins['Name'] == name]['open']
+        X[name] = secs[secs['Name'] == name]['open']
 
 
     X.insert(0, 'date_delta', np.tile(np.arange(1259),len(X.columns)))
     X = X.fillna(0).copy()
 
+    # in dimensions above 15 density based clustering algorithms tend to be much less effective
+    # in this case PCA is used to reduce dimensionaltiy to 15 before running OPTICS
     if X.shape[1] < 15:
         clusters = OPTICS(xi=.2).fit_predict(X)
-    else:
+    else: 
         pca = PCA(n_components=15)
 
         X_pca = pca.fit_transform(X)
@@ -155,21 +171,21 @@ def cluster(coins,labels):
 
 
 
-def find_pairs(coins,labels):
+def find_pairs(secs,labels):
     '''
 
-    :param coins:
+    :param secs:
     :return:
     '''
 
 
-    names = pd.unique(coins[labels[2]])
+    names = pd.unique(secs[labels[2]])
     cointegrated = []
     for i in range(len(names)):
         for j in range(i+1,len(names)):
 
-            co1 = coins[coins[labels[2]] == names[i]]
-            co2 = coins[coins[labels[2]] == names[j]]
+            co1 = secs[secs[labels[2]] == names[i]]
+            co2 = secs[secs[labels[2]] == names[j]]
             co1 = co1[co1[lables[1]] == co2[lables[1]]]
             co2 = co2[co1[lables[1]] == co2[lables[1]]]
             print(co1)
@@ -187,7 +203,7 @@ def find_pairs(coins,labels):
     print(co_pairs)
     for pair in co_pairs:
         
-        spread = np.subtract(coins[coins[labels[2]] == pair[0]][labels[0]].to_numpy(), coins[coins[labels[2]] == pair[1]][labels[0]].to_numpy())
+        spread = np.subtract(secs[secs[labels[2]] == pair[0]][labels[0]].to_numpy(), secs[secs[labels[2]] == pair[1]][labels[0]].to_numpy())
         spread = np.absolute(spread)
         spread[spread==0] = np.finfo(np.float64).eps
 
@@ -218,6 +234,20 @@ class CommandLine():
     def __init__(self, inOpts=None):
         '''
         Implement a parser to interpret the command line argv string using argparse.
+
+        args:
+            findPairs: optional, runs find_pairs() 
+            calcThresholds: optional, runs calc_thresholds()
+            labels: specifies labels of columns in the dataset, needs names of open,date,name in that order. 
+                Where open is the opening price, date is the date and name is the name of the security
+                Defualts to ['Open','Date','Name']
+            cluster: runs OPTICS on the dataset to cluster the securites. Currently not used in algorithm.
+            filename: REQURIED, flag specifies the filename of the dataset
+            delim: optional, specifies delimiter of the dataset, ie tsv,csv,etc.. Defaults to csv.
+            learingRate: optional, specify learing rate of LSTM models. Defualts to 0.01.
+            epochs: optional, speficy number of epochs used to train LSTM models. Defualts to 1000.
+            test: optional, runs a test enviromment that trades using thresholds created from calc_thresholds()
+            initInvest: optional, specifies initial investment amount used in test(). Defualts to 10,000$.
         '''
 
         import argparse
