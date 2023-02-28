@@ -3,7 +3,7 @@
 # Introduction
 This program implements pairs trading using LSTM networks to inform when to open or close short or long positoins in the market.
 
-The structure for the code and the math/ general scrture of the algorithm comes from 
+The general structure for the code and the math/ general scrture of the algorithm comes from 
 
 	A Machine Learning based Pairs Trading Investment Strategy (SpringerBriefs in Applied Sciences and Technology) 1st ed. 2021
 
@@ -17,7 +17,7 @@ Pairs trading is an approach to automated securities trading that involves ident
 and then shorting the the security that is increaing in value and going long on the security that is dropping in value. If the spread of the securites reverts back to 
 the same historical mean, then there would be a profit on both the short and long positions as the security that dropped in value would go back up, and the security that increaseed in value would go back down. 
 
-The most common example of a "pair" are corn and ethanol securites. Corn and ethanol production are intrisictly linked since roughly 40% of all ethanol in the US is produced from corn. 
+The most common example of a "pair" is corn and ethanol securites. The value of corn and ethanol are intrisictly linked since roughly 40% of all ethanol in the US is produced from corn. 
 So, Looking at corn and ethanol futures/etfs they tend to have slight variations in price but consitently tend to revert to a similar mean. 
 
 ![plot](./corn_ethanol_spread.png)
@@ -30,4 +30,6 @@ In the graph above its clear that if ethanol was shorted at its peak there would
 
 1. Identify pairs
 	
-	
+	In order to identify a profiable pair the securities must 
+		a) be cointegrated
+		b) have a hurst exponent less then 0.5
