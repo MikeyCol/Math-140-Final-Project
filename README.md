@@ -1,6 +1,6 @@
-## PairsTradingML
+### Machine Learing Pairs Trading 
 
-# Introduction
+## Introduction
 This program implements pairs trading using LSTM networks to inform when to open or close short or long positoins in the market.
 
 The general structure for the code and the math/ general scrture of the algorithm comes from 
@@ -27,16 +27,19 @@ In order to profit off of this trend, if the security increases above or decreac
 In the graph above its clear that if ethanol was shorted at its peak there would have been a massive profit. The idea behind pairs trading is to find pairs of secirties that can help predict and profit off of these kind of fluxuations. 
 
 
-# Algorithm Overview
+## Algorithm Overview
 
-1. Identify pairs  
+# 1. Identify pairs  
 	
 	In order to identify a profiable pair the securities must be cointegrated and the spread of the securites must have a hurst exponent less then 0.5.  
 	
 	A pair of time series, x_t and y_t, are cointegrated if they are non-stationary and have order of integration d=1 and they can form a linear combonation for some value β and u_t where u_t is stationary.
 	
-		$$ x_t - βy_t = u_t $$
+		x_t - βy_t = u_t
 		
 	This ensures that the mean and variance of the spread are constant over time, which implies that the spread is mean reverting over a long enough peroid of time. 
 	
-	The Hurst exponent 
+	The Hurst exponent describes whether the time series consitently reverts to a mean or if trends in some coniststent direction.
+	Formally defined as 
+	
+		$E[R(n)/S(n)] = Cn^{h} as n --> \inf$
