@@ -29,6 +29,12 @@ In the graph above its clear that if ethanol was shorted at its peak there would
 
 ## Algorithm Overview
 
+The alogorithm can be broken down into three steps  
+
+1. Idenfity pairs using cointegration and the Hurst exponent.
+2. Calculate trading thresholds using indiviualized LSTM Nerual Networks.
+3. Test the thresholds in a vitural environment.  
+
 ### 1. Identify pairs  
 	
 In order to identify a profiable pair the securities must be cointegrated and the spread of the securites must have a hurst exponent less then 0.5.  
@@ -48,6 +54,18 @@ where
 
 1. R(n) is the range of the first n cumulative deviations from the mean
 2. S(n) is the series (sum) of the first n standard deviations
-3. {\displaystyle \mathbb {E} \left[x\right]\,} is the expected value
+3. $E[x]$ is the expected value
 4. n is the time span of the observation (number of data points in a time series)
 5. C is a constant.
+
+If h < 0.5 then the series is considered mean-revertint/ anit-persistent and can qualify as a pair.
+
+### 2. Calculate Thresholds 
+
+Once pairs are indientified 
+
+### 3. Test Thresholds
+
+## Running the program
+
+
