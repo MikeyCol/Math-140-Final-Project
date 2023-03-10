@@ -40,6 +40,12 @@ $x_t - βy_t = u_t$
 This ensures that the mean and variance of the spread are constant over time, which implies that the spread is mean reverting over a long enough peroid of time. 
 
 The Hurst exponent describes whether the time series consitently reverts to a mean or if trends in some coniststent direction.
-Formally defined as 
+Formally defined on [the wikipedia article for the Hurst Exponent](https://en.wikipedia.org/wiki/Hurst_exponent) as 
 	
 $E[R(n)/S(n)] = Cn^{h}$ as $n \rightarrow \infty$
+
+where R(n) is the range of the first n cumulative deviations from the mean
+S(n) is the series (sum) of the first n standard deviations
+{\displaystyle \mathbb {E} \left[x\right]\,} is the expected value
+n is the time span of the observation (number of data points in a time series)
+C is a constant.
