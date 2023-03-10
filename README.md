@@ -42,4 +42,4 @@ This ensures that the mean and variance of the spread are constant over time, wh
 The Hurst exponent describes whether the time series consitently reverts to a mean or if trends in some coniststent direction.
 Formally defined as 
 	
-$$E[R(n)/S(n)] = Cn^{h} as n --> \inf$$
+$E[R(n)/S(n)] = Cn^{h} \textrm{as} n \rightarrow \infty$
