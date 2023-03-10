@@ -1,4 +1,4 @@
-### Machine Learing Pairs Trading 
+# Machine Learing Pairs Trading 
 
 ## Introduction
 This program implements pairs trading using LSTM networks to inform when to open or close short or long positoins in the market.
@@ -29,7 +29,7 @@ In the graph above its clear that if ethanol was shorted at its peak there would
 
 ## Algorithm Overview
 
-# 1. Identify pairs  
+### 1. Identify pairs  
 	
 In order to identify a profiable pair the securities must be cointegrated and the spread of the securites must have a hurst exponent less then 0.5.  
 
@@ -44,8 +44,10 @@ Formally defined on [the wikipedia article for the Hurst Exponent](https://en.wi
 	
 $E[R(n)/S(n)] = Cn^{h}$ as $n \rightarrow \infty$
 
-where R(n) is the range of the first n cumulative deviations from the mean
-S(n) is the series (sum) of the first n standard deviations
-{\displaystyle \mathbb {E} \left[x\right]\,} is the expected value
-n is the time span of the observation (number of data points in a time series)
-C is a constant.
+where  
+
+1. R(n) is the range of the first n cumulative deviations from the mean
+2. S(n) is the series (sum) of the first n standard deviations
+3. {\displaystyle \mathbb {E} \left[x\right]\,} is the expected value
+4. n is the time span of the observation (number of data points in a time series)
+5. C is a constant.
