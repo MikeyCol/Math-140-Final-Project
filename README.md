@@ -62,10 +62,31 @@ If h < 0.5 then the series is considered mean-revertint/ anit-persistent and can
 
 ### 2. Calculate Thresholds 
 
-Once pairs are indientified 
+Thresholds determine the change in value of a security that triggers opeing a position on that security.  
+Two thresholds are calcualted for each security, one to detrmine the daily change in value to open a long position and one to open a short position. 
+
+These thresholds are derived from predicitions geneerated from the LSTM networks created by SimpleLSTM.py  
+Individual nerual netowrks are trained for each securiy in the pair, then predictions are generated over the testing data using these NNs.
+
+Thresholds are calcualted from these predictions by calulating the delta of each time step using $
+
+
+Once pairs are indientified, LSTM networks are trained on data from each pair in order to predict the prices of each pair.
+
+Predictions for the desired time peroid, in this case the testing split, are generated and then the change in every time step is calcualted using the following formula.  
+$D = V_{i} - V_{i-1}/V_{i-1}$  
+Where D is the normalized delta between time steps and $V_{i}$ is the value of a security at time step i.  
+Then the deltas are split into poisitive and negative groups, the idea being to create separate distributions for when the value of the security increases and when it decreases.  
+The quantile and decile of each distribution are calcualted. These become the thresholds to open a long or short position on a security.
+
+
 
 ### 3. Test Thresholds
 
+Once the thresholds are calcualted we end up with eight thresholds per secuirty.  
+The upper and lower quanitle and decile for both the positive deltas and negative delats from the predcited time series.
+
+These threholds are then tested over that same testing data.  
 ## Running the program
 
 

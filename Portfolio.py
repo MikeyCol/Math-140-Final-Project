@@ -127,14 +127,14 @@ class Portfolio():
                 
                 print()
                 print('sec 1 short adjusted threshold: ' + str(opensThresholds[1][1]*prevOpen + prevOpen))
-                if sec not in self.investmentsShort.keys() and open < opensThresholds[1][1]*prevOpen + prevOpen: # tests for opening short on sec 1
+                if sec not in self.investmentsShort.keys() and open < opensThresholds[1][1]*prevOpen + prevOpen: # tests for opening short 
                     print('opened short on '+str(open)+' on day ' + str(i))
                     invest = self.freeCash*percentInvest
                     self.freeCash -= invest
                     self.investmentsShort[sec] = Investment(invest,i)
                     
                 print('sec 1 long adjusted threshold: ' + str(opensThresholds[0][2]*prevOpen + prevOpen)) 
-                if sec not in self.investmentsLong.keys() and open > opensThresholds[0][2]*prevOpen + prevOpen: # tests for opening long on sec 1
+                if sec not in self.investmentsLong.keys() and open > opensThresholds[0][2]*prevOpen + prevOpen: # tests for opening long 
                     print('opened long on '+str(open)+' on day ' + str(i))
                     invest = self.freeCash*percentInvest
                     self.freeCash -= invest
