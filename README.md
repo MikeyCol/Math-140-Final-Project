@@ -108,26 +108,26 @@ Theoretically at this point if the thresholds profit over a long peroid of time 
 ## File descriptions
 
 aribitrage.py
-	- executable
-	- run using ./arbitrage.py -f filename.csv -fp -ct -t 
-	- flag descriptions
-		-f:  Argument to input the filename of your dataset, assumes csv format by default, only required flag
-		-fp: finds pairs in dataset
-		-ct: calcualtes thresholds of found pairs
-		-l: secifies columns labels defualt=['Open','Date','Name'] assumes that order in your input
-		-c: runs a OPTICS clustering over the dataset (not used, but intresting for visualization)
-		-de: specifies delmiter in dataset
-		-lr: specifies learing rate for NN training
-		-e: specifiies epochs for NN training
-		-t: tests thresholds
-		-i: speicifies initial capital for testing thresholds
-
-Portfolio.py
-	- called by -t in arbitrage.py
-	- contains algorithm for testing thresholds
+	- executable  
+	- run using ./arbitrage.py -f filename.csv -fp -ct -t   
+	- flag descriptions  
+		-f:  Argument to input the filename of your dataset, assumes csv format by default, only required flag  
+		-fp: finds pairs in dataset  
+		-ct: calcualtes thresholds of found pairs  
+		-l: secifies columns labels defualt=['Open','Date','Name'] assumes that order in your input  
+		-c: runs a OPTICS clustering over the dataset (not used, but intresting for visualization)  
+		-de: specifies delmiter in dataset  
+		-lr: specifies learing rate for NN training  
+		-e: specifiies epochs for NN training  
+		-t: tests thresholds  
+		-i: speicifies initial capital for testing thresholds  
+ 
+Portfolio.py  
+	- called by -t in arbitrage.py  
+	- contains algorithm for testing thresholds  
 	
-SimpleLSTM.py
-	- conains NN framework 
+SimpleLSTM.py  
+	- conains NN framework   
 	
 	
 
