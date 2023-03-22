@@ -107,7 +107,7 @@ Theoretically at this point if the thresholds profit over a long peroid of time 
 
 ## File descriptions
 
-aribitrage.py
+- aribitrage.py
 	- executable  
 	- run using ./arbitrage.py -f filename.csv -fp -ct -t   
 	- flag descriptions  
@@ -122,11 +122,11 @@ aribitrage.py
 		-t: tests thresholds  
 		-i: speicifies initial capital for testing thresholds  
  
-Portfolio.py  
+- Portfolio.py  
 	- called by -t in arbitrage.py  
 	- contains algorithm for testing thresholds  
 	
-SimpleLSTM.py  
+- SimpleLSTM.py  
 	- conains NN framework   
 	
 	
