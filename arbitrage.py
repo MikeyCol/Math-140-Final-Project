@@ -267,7 +267,6 @@ class CommandLine():
         self.parser.add_argument('-e','--epochs',action='store',default='1000',nargs='?',help='Set number of epochs for training Nerual Networks, default=1000')
         self.parser.add_argument('-t', '--test', action='store_true',help='runs testThresholds in arbitrage')
         self.parser.add_argument('-i','--initInvest',action='store',default='10000',nargs='?',help='Set initial trading capital in US dollars default=10000')
-        self.parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.1')
 
         if inOpts is None:
             self.args = self.parser.parse_args()

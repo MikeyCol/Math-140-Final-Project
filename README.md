@@ -86,7 +86,49 @@ The quantile and decile of each distribution are calcualted. These become the th
 Once the thresholds are calcualted we end up with eight thresholds per secuirty.  
 The upper and lower quanitle and decile for both the positive deltas and negative delats from the predcited time series.
 
-These threholds are then tested over that same testing data.  
-## Running the program
+These thresholds are then tested over the testing data from the train/test split used to train the NN.  
+
+The trading algorithm works as follows:
+1. Check for short sell conditions
+	1. if open reverts to invest price or higher (accept loss)
+	2. if open drops equal to or below 1 std deviation below initial short price
+2. Check for long sell conditions
+	1. if open reverts to invest price or lower (accept loss)
+	2. open gains at least a std deviation above invest price
+3. Check for opening short positions
+	1. if open increases past one of the positive thresholds 
+4. Check for opeing long positions
+	1. if open decrueses past of the negative thresholds
+	
+	
+The quanitle and decile thresholds are tested and the better performing threshold is chosen.
+
+Theoretically at this point if the thresholds profit over a long peroid of time then you could run it on a with real money and hope to profit. 
+
+## File descriptions
+
+aribitrage.py
+	- executable
+	- run using ./arbitrage.py -f filename.csv -fp -ct -t 
+	- flag descriptions
+		-f:  Argument to input the filename of your dataset, assumes csv format by default, only required flag
+		-fp: finds pairs in dataset
+		-ct: calcualtes thresholds of found pairs
+		-l: secifies columns labels defualt=['Open','Date','Name'] assumes that order in your input
+		-c: runs a OPTICS clustering over the dataset (not used, but intresting for visualization)
+		-de: specifies delmiter in dataset
+		-lr: specifies learing rate for NN training
+		-e: specifiies epochs for NN training
+		-t: tests thresholds
+		-i: speicifies initial capital for testing thresholds
+
+Portfolio.py
+	- called by -t in arbitrage.py
+	- contains algorithm for testing thresholds
+	
+SimpleLSTM.py
+	- conains NN framework 
+	
+	
 
 
